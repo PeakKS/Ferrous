@@ -1,16 +1,10 @@
 [package]
-name = "console"
+name = "renderer"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-  "engine",
-  "renderer",
-]
-
-[[bin]]
-name = "engine"
-path = "engine/src/main.rs"
+[dependencies]
+sdl2 = { version = "0.35.2", features = [] }
+ash = "0.37.0"

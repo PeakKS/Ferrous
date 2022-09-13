@@ -3,47 +3,11 @@ use ash::extensions::{
     khr::{Surface, Swapchain},
 };
 use ash::{vk, vk::Handle, Device, Entry, Instance};
-use clap::Parser;
+
 use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 
-#[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
-struct Cli {
-    #[clap(short, long, value_parser)]
-    width: Option<u32>,
-
-    #[clap(short, long, value_parser)]
-    height: Option<u32>,
-
-    #[clap(short, long)]
-    igpu: bool,
-}
-
-struct LaunchOptions {
-    width: u32,
-    height: u32,
-    integrated: bool,
-}
-
-impl From<&Cli> for LaunchOptions {
-    fn from(cli: &Cli) -> Self {
-        LaunchOptions {
-            width: cli.width.unwrap_or(1280),
-            height: cli.height.unwrap_or(720),
-            integrated: cli.igpu,
-        }
-    }
-}
-
-fn main() {
-    let cli = Cli::parse();
-    let options = LaunchOptions::from(&cli);
-
-    let renderer = Core::new(&options);
-}
-
-struct Core {
+pub struct Core {
     //sdl2
     sdl: sdl2::Sdl,
     sdl_video: sdl2::VideoSubsystem,
@@ -88,7 +52,7 @@ struct Core {
 }
 
 impl Core {
-    pub fn new(options: &LaunchOptions) -> Self {
+    pub fn new(width: u32, height: u32, integrated: bool) -> Self {
         unsafe {
             let sdl = sdl2::init().expect("Failed to initialize SDL2");
             let sdl_video = sdl.video().expect("Failed to initialize SDL2 Video");
@@ -96,7 +60,7 @@ impl Core {
             let package_name = env!("CARGO_PKG_NAME");
 
             let window = sdl_video
-                .window(package_name, options.width, options.height)
+                .window(package_name, width, height)
                 .position_centered()
                 .vulkan()
                 .build()
@@ -206,7 +170,7 @@ impl Core {
 
                     (
                         queue_family_index,
-                        if options.integrated {
+                        if integrated {
                             match instance.get_physical_device_properties(*device).device_type {
                                 vk::PhysicalDeviceType::INTEGRATED_GPU => memory.size,
                                 _ => 0,
@@ -279,8 +243,8 @@ impl Core {
 
             let surface_resoultion = match surface_capabilities.current_extent.width {
                 std::u32::MAX => vk::Extent2D {
-                    width: options.width,
-                    height: options.height,
+                    width,
+                    height
                 },
                 _ => surface_capabilities.current_extent,
             };
@@ -508,10 +472,6 @@ impl Core {
                 setup_commands_reuse_fence,
             }
         }
-    }
-
-    fn main() -> Result<(), String> {
-        Ok(())
     }
 }
 
